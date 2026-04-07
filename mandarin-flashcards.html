@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>华语词卡 · Mandarin Flashcards</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #ffffff;
+      --bg2:         #f5f5f3;
+      --bg3:         #eeecea;
+      --bg-info:     #e6f1fb;
+      --bg-warn:     #faeeda;
+      --text:        #1a1a18;
+      --text2:       #6b6b67;
+      --text3:       #9c9a92;
+      --text-info:   #185fa5;
+      --text-warn:   #854f0b;
+      --border:      rgba(0,0,0,0.12);
+      --border2:     rgba(0,0,0,0.22);
+      --info:        #185fa5;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #1c1c1a;
+        --bg2:       #252523;
+        --bg3:       #2e2e2b;
+        --bg-info:   #042c53;
+        --bg-warn:   #412402;
+        --text:      #e8e6df;
+        --text2:     #a8a69e;
+        --text3:     #6b6b67;
+        --text-info: #85b7eb;
+        --text-warn: #fac775;
+        --border:    rgba(255,255,255,0.10);
+        --border2:   rgba(255,255,255,0.20);
+        --info:      #85b7eb;
+      }
+    }
+
+    /*
+      Kaiti font stack — covers all major platforms:
+        Windows  → KaiTi / 楷体_GB2312
+        macOS    → Kaiti SC
+        Linux    → AR PL UKai CN
+        Android  → falls back to system cursive (mapped to Kai)
+    */
+    .kaiti {
+      font-family:
+        "KaiTi", "Kaiti SC", "Kaiti TC", "STKaiti",
+        "AR PL UKai CN", "TW-Kai",
+        "楷体", "楷体_GB2312",
+        cursive, serif;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 48px;
+    }
+
+    .container { width: 100%; max-width: 520px; }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .header h1 { font-size: 16px; font-weight: 500; color: var(--text); }
+    .header h1 span { font-size: 13px; color: var(--text3); margin-left: 6px; }
+
+    /* ── Shared buttons ── */
+    button { font-family: inherit; cursor: pointer; }
+
+    .btn-ghost {
+      font-size: 12px;
+      background: transparent;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      padding: 5px 12px;
+      color: var(--text2);
+      transition: all .15s;
+    }
+    .btn-ghost:hover { color: var(--text); background: var(--bg2); }
+
+    /* ── Topic pills ── */
+    .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .pill {
+      font-size: 11px;
+      padding: 3px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      border: 0.5px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      transition: all .15s;
+    }
+    .pill.active {
+      background: var(--bg-info);
+      color: var(--text-info);
+      border-color: var(--info);
+      font-weight: 500;
+    }
+
+    /* ── Progress ── */
+    .dots { display: flex; justify-content: center; gap: 7px; margin-bottom: 10px; }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border2);
+      transition: background .2s, transform .2s;
+    }
+    .dot.active { background: var(--info); transform: scale(1.3); }
+    .dot.done   { background: color-mix(in srgb, var(--info) 50%, transparent); }
+
+    .pbar  { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 16px; }
+    .pfill { height: 100%; background: var(--info); border-radius: 2px; transition: width .3s; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px 20px;
+      margin-bottom: 14px;
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .card-top .tag {
+      font-size: 11px;
+      color: var(--text2);
+      background: var(--bg2);
+      padding: 2px 9px;
+      border-radius: 10px;
+    }
+    .card-top .ctr { font-size: 11px; color: var(--text3); }
+
+    /* ── Listen zone ── */
+    .listen-zone {
+      background: var(--bg2);
+      border-radius: var(--radius-md);
+      padding: 20px 16px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .listen-title {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .6px;
+      color: var(--text3);
+      margin-bottom: 14px;
+    }
+    .listen-btns { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+    .btn-listen {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg-info);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 11px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-info);
+      transition: opacity .15s;
+    }
+    .btn-listen:hover  { opacity: .85; }
+    .btn-listen.playing { opacity: .6; }
+
+    .btn-slow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      padding: 11px 18px;
+      font-size: 13px;
+      color: var(--text2);
+      transition: all .15s;
+    }
+    .btn-slow:hover  { color: var(--text); }
+    .btn-slow.playing { opacity: .6; }
+
+    /* ── Reveal grid ── */
+    .step-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+    .reveal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .reveal-btn {
+      background: var(--bg2);
+      border: 0.5px dashed var(--border2);
+      border-radius: var(--radius-md);
+      padding: 12px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-height: 88px;
+      justify-content: center;
+    }
+    .reveal-btn:hover { background: var(--bg); border-style: solid; }
+    .reveal-btn .icon { font-size: 18px; opacity: .45; }
+    .reveal-btn .lbl  { font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: .4px; }
+
+    .revealed-box {
+      background: var(--bg);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 88px;
+    }
+    .revealed-box .lbl { font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: .4px; }
+    .r-pinyin { font-size: 15px; font-weight: 500; color: var(--info); letter-spacing: 1px; line-height: 1.3; }
+    .r-char   { font-size: 44px; line-height: 1.1; }
+    .r-ms     { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+    .r-en     { font-size: 10px; color: var(--text2); margin-top: 1px; }
+
+    /* ── Stroke section ── */
+    .stroke-section { border-top: 0.5px solid var(--border); padding-top: 12px; }
+    .stroke-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+    .stroke-steps { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+    .sbox  { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .schar {
+      width: 46px; height: 46px;
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 27px;
+      position: relative;
+    }
+    .snum {
+      position: absolute;
+      top: 2px; right: 3px;
+      font-size: 9px;
+      font-family: -apple-system, sans-serif;
+      color: var(--text3);
+    }
+    .sn       { font-size: 9px; color: var(--text3); }
+    .sdivider { width: 1px; height: 46px; background: var(--border); margin: 0 4px; align-self: center; }
+    .stroke-tip {
+      font-size: 11px;
+      color: var(--text2);
+      background: var(--bg2);
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 8px;
+      border-left: 2px solid var(--info);
+      line-height: 1.5;
+    }
+
+    /* ── Nav ── */
+    .nav { display: flex; justify-content: center; align-items: center; gap: 12px; }
+    .btn-nav {
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      padding: 8px 24px;
+      font-size: 13px;
+      color: var(--text);
+      transition: background .15s;
+    }
+    .btn-nav:hover    { background: var(--bg); }
+    .btn-nav:disabled { opacity: .3; cursor: default; }
+    .nav-ctr { font-size: 13px; color: var(--text2); min-width: 64px; text-align: center; }
+
+    /* ── Voice warning ── */
+    .voice-warn {
+      font-size: 11px;
+      color: var(--text-warn);
+      background: var(--bg-warn);
+      padding: 7px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    /* ── Footer ── */
+    .footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 20px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>华语词卡 <span>Mandarin Flashcards</span></h1>
+    <button class="btn-ghost" onclick="doShuffle()">🔀 Shuffle</button>
+  </div>
+
+  <div class="pills"     id="pills"></div>
+  <div class="dots"      id="dots"></div>
+  <div class="pbar"><div class="pfill" id="pfill"></div></div>
+  <div class="voice-warn" id="voice-warn">⚠️ No Mandarin voice found on this device. Please install a Chinese language pack in your system settings.</div>
+
+  <div class="card" id="card"></div>
+
+  <div class="nav">
+    <button class="btn-nav" id="pb" onclick="move(-1)">← Prev</button>
+    <span   class="nav-ctr" id="nc"></span>
+    <button class="btn-nav" id="nb" onclick="move(1)">Next →</button>
+  </div>
+
+  <div class="footer">Tap 🔊 first · write it down · then reveal each answer</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  WORD DATA
+//
+//  To add a new topic, copy any entry block and update:
+//    char    — Chinese character(s)
+//    py      — Pinyin with tone marks
+//    ms      — Bahasa Malaysia meaning
+//    en      — English meaning
+//    topic   — e.g. 'Topic 5' (pills auto-generate from this)
+//    strokes — array of step groups; each group = one character's build-up stages
+//    tip     — writing tip shown after character is revealed
+//    count   — stroke count label string
+// ─────────────────────────────────────────────────────────────
+const ALL = [
+
+  // ── Topic 1 ───────────────────────────────────────────────
+  {
+    char: '爸爸', py: 'bà ba',
+    ms: 'ayah / bapa', en: 'father',
+    topic: 'Topic 1',
+    strokes: [['父','爸'], ['爸爸']],
+    tip: '爸 = 8 strokes: father radical 父 on top, 巴 below. Write 爸 twice.',
+    count: '8 + 8 = 16'
+  },
+  {
+    char: '回来', py: 'huí lái',
+    ms: 'balik / kembali', en: 'come back / return',
+    topic: 'Topic 1',
+    strokes: [['囗','回'], ['木','来']],
+    tip: '回 = 6 strokes: two nested squares. 来 = 7 strokes: cross then spreading legs.',
+    count: '6 + 7 = 13'
+  },
+  {
+    char: '姐姐', py: 'jiě jie',
+    ms: 'kakak perempuan', en: 'older sister',
+    topic: 'Topic 1',
+    strokes: [['女','姐'], ['姐姐']],
+    tip: '姐 = 8 strokes: woman radical 女 on left, 且 on right. Write 姐 twice.',
+    count: '8 + 8 = 16'
+  },
+  {
+    char: '笑声', py: 'xiào shēng',
+    ms: 'bunyi ketawa / gelak ketawa', en: 'laughter / sound of laughing',
+    topic: 'Topic 1',
+    strokes: [['⺮','笑'], ['士','声']],
+    tip: '笑 = 10 strokes: bamboo radical on top, 夭 below. 声 = 7 strokes: 士 on top.',
+    count: '10 + 7 = 17'
+  },
+  {
+    char: '星星', py: 'xīng xing',
+    ms: 'bintang-bintang', en: 'stars',
+    topic: 'Topic 1',
+    strokes: [['日','星'], ['星星']],
+    tip: '星 = 9 strokes: sun radical 日 on top, 生 below. Write 星 twice.',
+    count: '9 + 9 = 18'
+  },
+
+  // ── Topic 4 ───────────────────────────────────────────────
+  {
+    char: '吃饭', py: 'chī fàn',
+    ms: 'makan', en: 'to eat a meal',
+    topic: 'Topic 4',
+    strokes: [['口','吃'], ['饣','饭']],
+    tip: '吃 = 6 strokes: mouth radical 口 on left, 乞 on right. 饭 = 7 strokes: food radical 饣 on left, 反 on right.',
+    count: '6 + 7 = 13'
+  },
+  {
+    char: '饭菜', py: 'fàn cài',
+    ms: 'makanan / lauk-pauk', en: 'food and dishes',
+    topic: 'Topic 4',
+    strokes: [['饣','饭'], ['艹','菜']],
+    tip: '饭 = 7 strokes: food radical 饣 on left, 反 on right. 菜 = 11 strokes: grass radical 艹 on top, 采 below.',
+    count: '7 + 11 = 18'
+  },
+  {
+    char: '瓜', py: 'guā',
+    ms: 'tembikai / labu', en: 'melon / gourd',
+    topic: 'Topic 4',
+    strokes: [['瓜']],
+    tip: '瓜 = 5 strokes: outer frame first, then two inner strokes, ending with the dot.',
+    count: '5'
+  },
+  {
+    char: '喜欢', py: 'xǐ huān',
+    ms: 'suka / gemar', en: 'to like / to enjoy',
+    topic: 'Topic 4',
+    strokes: [['壴','喜'], ['欠','欢']],
+    tip: '喜 = 12 strokes: 壴 on top, 口 below. 欢 = 6 strokes: 又 on left, 欠 on right.',
+    count: '12 + 6 = 18'
+  },
+  {
+    char: '妹妹', py: 'mèi mei',
+    ms: 'adik perempuan', en: 'younger sister',
+    topic: 'Topic 4',
+    strokes: [['女','妹'], ['妹妹']],
+    tip: '妹 = 8 strokes: woman radical 女 on left, 未 on right. Write 妹 twice.',
+    count: '8 + 8 = 16'
+  },
+  {
+    char: '积木', py: 'jī mù',
+    ms: 'blok mainan / bata mainan', en: 'building blocks / toy blocks',
+    topic: 'Topic 4',
+    strokes: [['禾','积'], ['木']],
+    tip: '积 = 10 strokes: grain radical 禾 on left, 只 on right. 木 = 4 strokes: horizontal, vertical, then two legs.',
+    count: '10 + 4 = 14'
+  },
+  {
+    char: '房子', py: 'fáng zi',
+    ms: 'rumah', en: 'house',
+    topic: 'Topic 4',
+    strokes: [['宀','房'], ['子']],
+    tip: '房 = 8 strokes: roof radical 宀 then 方 below. 子 = 3 strokes: hooked arm, then two small strokes.',
+    count: '8 + 3 = 11'
+  },
+  {
+    char: '我', py: 'wǒ',
+    ms: 'saya / aku', en: 'I / me',
+    topic: 'Topic 4',
+    strokes: [['我']],
+    tip: '我 = 7 strokes: 手 (hand) on left, 戈 (spear) on right. The middle stroke is shared.',
+    count: '7'
+  },
+  {
+    char: '游乐场', py: 'yóu lè chǎng',
+    ms: 'taman permainan', en: 'playground / amusement park',
+    topic: 'Topic 4',
+    strokes: [['氵','游'], ['乐'], ['土','场']],
+    tip: '游 = 12 strokes: water radical 氵 on left. 乐 = 5 strokes. 场 = 6 strokes: earth radical 土 on left, 昜 on right.',
+    count: '12 + 5 + 6 = 23'
+  },
+
+  // ── Add Topic 5, 6 … below this line ─────────────────────
+  // {
+  //   char: '你好', py: 'nǐ hǎo',
+  //   ms: 'helo / selamat', en: 'hello',
+  //   topic: 'Topic 5',
+  //   strokes: [['亻','你'], ['女','好']],
+  //   tip: '你 = 7 strokes: person radical 亻 on left, 尔 on right. 好 = 6 strokes: 女 + 子.',
+  //   count: '7 + 6 = 13'
+  // },
+];
+
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+const TOPICS = ['All', ...[...new Set(ALL.map(c => c.topic))]];
+let topic   = 'All';
+let words   = [...ALL];
+let idx     = 0;
+let shown   = { pinyin: false, meaning: false, char: false };
+let zhVoice = null;
+
+// ─────────────────────────────────────────────────────────────
+//  VOICE (Web Speech API — Mandarin TTS)
+// ─────────────────────────────────────────────────────────────
+function loadVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  zhVoice = voices.find(v => v.lang === 'zh-CN')
+         || voices.find(v => v.lang.startsWith('zh-'))
+         || voices.find(v => v.lang.startsWith('zh'));
+  if (!zhVoice) document.getElementById('voice-warn').style.display = 'block';
+}
+if (window.speechSynthesis) {
+  loadVoice();
+  window.speechSynthesis.onvoiceschanged = loadVoice;
+}
+
+function speak(rate) {
+  if (!window.speechSynthesis) { alert('Speech not supported on this browser.'); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(words[idx].char);
+  u.lang  = 'zh-CN';
+  u.rate  = rate || 1;
+  u.pitch = 1;
+  if (zhVoice) u.voice = zhVoice;
+  const b1 = document.getElementById('btn-normal');
+  const b2 = document.getElementById('btn-slow');
+  const target = rate < 1 ? b2 : b1;
+  if (target) target.classList.add('playing');
+  u.onend = u.onerror = () => {
+    if (b1) b1.classList.remove('playing');
+    if (b2) b2.classList.remove('playing');
+  };
+  window.speechSynthesis.speak(u);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────────────────────
+function getFiltered() {
+  return topic === 'All' ? [...ALL] : ALL.filter(c => c.topic === topic);
+}
+function setTopic(t) {
+  topic = t; words = getFiltered(); idx = 0; reset();
+  renderPills(); render();
+}
+function reset()   { shown = { pinyin: false, meaning: false, char: false }; }
+function reveal(k) { shown[k] = true; render(); }
+function move(d) {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  idx = Math.max(0, Math.min(words.length - 1, idx + d));
+  reset(); render();
+}
+function doShuffle() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  for (let i = words.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [words[i], words[j]] = [words[j], words[i]];
+  }
+  idx = 0; reset(); render();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────────────────────
+function renderPills() {
+  document.getElementById('pills').innerHTML = TOPICS.map(t =>
+    `<button class="pill${topic === t ? ' active' : ''}" onclick="setTopic('${t}')">${t}</button>`
+  ).join('');
+}
+
+function renderItem(key, icon, label, inner) {
+  if (!shown[key]) {
+    return `<div class="reveal-btn" onclick="reveal('${key}')">
+      <div class="icon">${icon}</div>
+      <div class="lbl">${label}</div>
+    </div>`;
+  }
+  return `<div class="revealed-box">${inner}</div>`;
+}
+
+function render() {
+  const c   = words[idx];
+  const pct = Math.round((idx + 1) / words.length * 100);
+
+  document.getElementById('pfill').style.width = pct + '%';
+  document.getElementById('nc').textContent    = (idx + 1) + ' / ' + words.length;
+  document.getElementById('pb').disabled       = idx === 0;
+  document.getElementById('nb').disabled       = idx === words.length - 1;
+
+  document.getElementById('dots').innerHTML = words.map((_, i) =>
+    `<div class="dot${i === idx ? ' active' : i < idx ? ' done' : ''}"></div>`
+  ).join('');
+
+  // Stroke steps
+  let strokeSteps = '';
+  c.strokes.forEach((group, i) => {
+    group.forEach((s, j) => {
+      const stepNum   = c.strokes.length > 1
+        ? (i + 1) + (group.length > 1 ? String.fromCharCode(97 + j) : '')
+        : '';
+      const stepLabel = c.strokes.length > 1 ? '字' + (i + 1) : '';
+      strokeSteps += `<div class="sbox">
+        <div class="schar kaiti">${s}${stepNum ? `<span class="snum">${stepNum}</span>` : ''}</div>
+        ${stepLabel ? `<div class="sn">${stepLabel}</div>` : ''}
+      </div>`;
+    });
+    if (i < c.strokes.length - 1) strokeSteps += `<div class="sdivider"></div>`;
+  });
+
+  const strokeSection = shown.char ? `
+    <div class="stroke-section">
+      <div class="stroke-label">STROKE ORDER · ${c.count} strokes total</div>
+      <div class="stroke-steps">${strokeSteps}</div>
+      <div class="stroke-tip">✏️ ${c.tip}</div>
+    </div>` : '';
+
+  const pinyinInner  = `<div class="lbl">拼音 PINYIN</div><div class="r-pinyin">${c.py}</div>`;
+  const meaningInner = `<div class="lbl">意思 MEANING</div><div class="r-ms">${c.ms}</div><div class="r-en">${c.en}</div>`;
+  const charInner    = `<div class="lbl">写字 CHARACTER</div><div class="r-char kaiti">${c.char}</div>`;
+
+  document.getElementById('card').innerHTML = `
+    <div class="card-top">
+      <span class="ctr">${idx + 1} of ${words.length}</span>
+      <span class="tag">${c.topic}</span>
+    </div>
+
+    <div class="listen-zone">
+      <div class="listen-title">👂 STEP 1 — LISTEN CAREFULLY</div>
+      <div class="listen-btns">
+        <button class="btn-listen" id="btn-normal" onclick="speak(1)">🔊 听一听 Listen</button>
+        <button class="btn-slow"   id="btn-slow"   onclick="speak(0.6)">🐢 Slow</button>
+      </div>
+    </div>
+
+    <div class="step-label">✏️ STEP 2 — WRITE IT DOWN, THEN REVEAL</div>
+    <div class="reveal-grid">
+      ${renderItem('pinyin',  '🗣️', '拼音 PINYIN',    pinyinInner)}
+      ${renderItem('meaning', '💬', '意思 MEANING',   meaningInner)}
+      ${renderItem('char',    '✏️', '写字 CHARACTER', charInner)}
+    </div>
+    ${strokeSection}
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────────
+renderPills();
+words = getFiltered();
+render();
+</script>
+</body>
+</html>
