@@ -1,134 +1,506 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mandarin Learning Hub</title>
-    <style>
-        /* 1. GENERAL PAGE STYLING */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f0f2f5; 
-            text-align: center; 
-            padding: 40px 15px; 
-            margin: 0;
-        }
-        h1 { color: #333; margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 30px; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>华语词卡 · Mandarin Flashcards</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 2. ACCORDION STYLING */
-        .accordion-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+    :root {
+      --bg:          #ffffff;
+      --bg2:         #f5f5f3;
+      --bg3:         #eeecea;
+      --bg-info:     #e6f1fb;
+      --bg-warn:     #faeeda;
+      --bg-success:  #dcfce7;
+      --text:        #1a1a18;
+      --text2:       #6b6b67;
+      --text3:       #9c9a92;
+      --text-info:   #185fa5;
+      --text-warn:   #854f0b;
+      --text-success:#166534;
+      --border:      rgba(0,0,0,0.12);
+      --border2:     rgba(0,0,0,0.22);
+      --info:        #185fa5;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+    }
 
-        .accordion {
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            padding: 20px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 1.2rem;
-            font-weight: bold;
-            transition: 0.4s;
-            border-radius: 8px;
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #1c1c1a;
+        --bg2:       #252523;
+        --bg3:       #2e2e2b;
+        --bg-info:   #042c53;
+        --bg-warn:   #412402;
+        --bg-success:#052e16;
+        --text:      #e8e6df;
+        --text2:     #a8a69e;
+        --text3:     #6b6b67;
+        --text-info: #85b7eb;
+        --text-warn: #fac775;
+        --text-success:#4ade80;
+        --border:    rgba(255,255,255,0.10);
+        --border2:   rgba(255,255,255,0.20);
+        --info:      #85b7eb;
+      }
+    }
 
-        /* Adds a little '+' or '-' icon */
-        .accordion:after { content: '\002B'; font-size: 1.5rem; }
-        .active:after { content: "\2212"; }
+    .kaiti {
+      font-family: "KaiTi", "Kaiti SC", "Kaiti TC", "STKaiti", "AR PL UKai CN", "TW-Kai", "楷体", "楷体_GB2312", cursive, serif;
+    }
 
-        .active, .accordion:hover { background-color: #0056b3; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 48px;
+      overflow-x: hidden;
+    }
 
-        /* 3. THE PANEL (GRID ENCLOSURE) */
-        .panel {
-            background-color: white;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
+    .container { width: 100%; max-width: 520px; position: relative; z-index: 10; }
 
-        /* 4. THE 2-COLUMN GRID */
-        .btn-grid { 
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Two equal columns */
-            gap: 15px;
-            padding: 20px;
-            list-style: none;
-            margin: 0;
-        }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .header h1 { font-size: 16px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 8px;}
+    .header h1 span { font-size: 13px; color: var(--text3); }
+    
+    .streak-badge {
+      font-size: 12px;
+      background: #ffedd5;
+      color: #c2410c;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    @media (prefers-color-scheme: dark) {
+        .streak-badge { background: #431407; color: #fdba74; }
+    }
 
-        .btn {
-            display: block;
-            padding: 15px 5px;
-            text-decoration: none;
-            background-color: #6c757d;
-            color: white;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
+    button { font-family: inherit; cursor: pointer; }
 
-        .btn:hover { 
-            background-color: #343a40; 
-            transform: translateY(-2px); 
-        }
+    .btn-ghost {
+      font-size: 12px;
+      background: transparent;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      padding: 5px 12px;
+      color: var(--text2);
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .btn-ghost:hover { color: var(--text); background: var(--bg2); }
 
-        /* 5. MOBILE RESPONSIVENESS */
-        @media (max-width: 480px) {
-            .btn-grid { grid-template-columns: 1fr; } /* Stack to 1 column on phones */
-            .accordion { font-size: 1rem; padding: 15px; }
-        }
-    </style>
+    #feedback {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .dots { display: flex; justify-content: center; gap: 7px; margin-bottom: 10px; flex-wrap: wrap;}
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); transition: background .2s, transform .2s; }
+    .dot.active { background: var(--info); transform: scale(1.3); }
+    .dot.done   { background: color-mix(in srgb, var(--info) 50%, transparent); }
+
+    .pbar  { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 16px; }
+    .pfill { height: 100%; background: var(--info); border-radius: 2px; transition: width .3s; }
+
+    .grade-zone {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 0.5px solid var(--border);
+    }
+    .btn-grade {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.1s;
+      cursor: pointer;
+    }
+    .btn-grade:active { transform: scale(0.95); }
+    .btn-correct { background: var(--bg-success); color: var(--text-success); }
+    .btn-wrong { background: #fee2e2; color: #991b1b; }
+    @media (prefers-color-scheme: dark) {
+        .btn-wrong { background: #450a0a; color: #fca5a5; }
+    }
+
+    .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .pill { font-size: 11px; padding: 4px 12px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); transition: all .15s; }
+    .pill.active { background: var(--bg-info); color: var(--text-info); border-color: var(--info); font-weight: 500; }
+    .pill.review-pill { border-color: #f59e0b; color: #d97706; background: #fef3c7; }
+    .pill.review-pill.active { background: #f59e0b; color: white; }
+    @media (prefers-color-scheme: dark) {
+        .pill.review-pill { background: #451a03; color: #fbbf24; border-color: #b45309; }
+        .pill.review-pill.active { background: #b45309; color: white; }
+    }
+
+    .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 22px 24px 20px; margin-bottom: 14px; position: relative; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card-top .tag { font-size: 11px; color: var(--text2); background: var(--bg2); padding: 2px 9px; border-radius: 10px; }
+    .card-top .ctr { font-size: 11px; color: var(--text3); }
+
+    .listen-zone { background: var(--bg2); border-radius: var(--radius-md); padding: 20px 16px; text-align: center; margin-bottom: 16px; }
+    .listen-title { font-size: 10px; font-weight: 500; letter-spacing: .6px; color: var(--text3); margin-bottom: 14px; }
+    .listen-btns { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .btn-listen { display: inline-flex; align-items: center; gap: 7px; background: var(--bg-info); border: none; border-radius: var(--radius-md); padding: 11px 24px; font-size: 14px; font-weight: 500; color: var(--text-info); transition: opacity .15s; }
+    .btn-listen:hover  { opacity: .85; }
+    .btn-listen.playing { opacity: .6; }
+    .btn-slow { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius-md); padding: 11px 18px; font-size: 13px; color: var(--text2); transition: all .15s; }
+    .btn-slow:hover  { color: var(--text); }
+    .btn-slow.playing { opacity: .6; }
+
+    .reveal-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .reveal-btn { background: var(--bg2); border: 0.5px dashed var(--border2); border-radius: var(--radius-md); padding: 12px 6px; text-align: center; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 5px; min-height: 96px; justify-content: center; }
+    .reveal-btn:hover { background: var(--bg); border-style: solid; }
+    .reveal-btn .icon { font-size: 18px; opacity: .45; }
+    .reveal-btn .lbl { font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: .4px; }
+
+    .revealed-box { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius-md); padding: 10px 6px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 96px; animation: popIn 0.2s ease-out; }
+    @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    
+    .revealed-box .lbl { font-size: 9px; color: var(--text3); font-weight: 500; letter-spacing: .4px; margin-bottom: 2px;}
+    .r-pinyin { font-size: 15px; font-weight: 500; color: var(--info); letter-spacing: 1px; line-height: 1.3; }
+    .r-char { font-size: 44px; line-height: 1.1; }
+    .r-en { font-size: 13px; font-weight: bold; color: var(--text); line-height: 1.2; }
+    .r-ms { font-size: 11px; color: var(--text2); font-style: italic; margin-top: 2px; }
+    .r-emoji { font-size: 18px; margin-bottom: 2px; }
+
+    .stroke-section { border-top: 0.5px solid var(--border); padding-top: 12px; }
+    .stroke-label { font-size: 10px; font-weight: 500; letter-spacing: .5px; color: var(--text3); margin-bottom: 8px; }
+    .stroke-steps { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+    .schar { width: 46px; height: 46px; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 27px; position: relative; }
+    .snum { position: absolute; top: 2px; right: 3px; font-size: 9px; color: var(--text3); }
+    .stroke-tip { font-size: 11px; color: var(--text2); background: var(--bg2); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 2px solid var(--info); line-height: 1.5; }
+
+    .nav { display: flex; justify-content: center; align-items: center; gap: 12px; }
+    .btn-nav { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius-md); padding: 8px 24px; font-size: 13px; color: var(--text); transition: background .15s; }
+    .btn-nav:hover { background: var(--bg); }
+    .btn-nav:disabled { opacity: .3; cursor: default; }
+    .nav-ctr { font-size: 13px; color: var(--text2); min-width: 64px; text-align: center; }
+
+    .voice-warn { font-size: 11px; color: var(--text-warn); background: var(--bg-warn); padding: 7px 10px; border-radius: 6px; margin-bottom: 10px; display: none; }
+    .footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 20px; }
+
+    /* Confetti Canvas */
+    #confetti-canvas {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
 </head>
 <body>
+<canvas id="confetti-canvas"></canvas>
+<div id="feedback"></div>
 
-    <h1>Mandarin Flashcards</h1>
-    <p class="subtitle">Select your level to view lessons</p>
-
-    <div class="accordion-container">
-        
-        <button class="accordion">Year 1 Lessons</button>
-        <div class="panel">
-            <ul class="btn-grid">
-                <li><a class="btn" href="Year1/Lesson4/">Lesson4</a></li>
-            </ul>
-        </div>
-
-        <button class="accordion">Year 5 Lessons</button>
-        <div class="panel">
-            <ul class="btn-grid">
-                <li><a class="btn" href="Year5/Lesson1/">Lesson</a></li>
-               
-                </ul>
-        </div>
-
+<div class="container">
+  <div class="header">
+    <h1>
+      华语词卡 <span>Mandarin Flashcards</span>
+    </h1>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="streak-badge" id="streak-counter" style="display: none;">🔥 0</span>
+      <button class="btn-ghost" onclick="doShuffle()">🔀 Shuffle</button>
     </div>
+  </div>
 
-    <script>
-        var acc = document.getElementsByClassName("accordion");
-        for (var i = 0; i < acc.length; i++) {
-            acc[i].addEventListener("click", function() {
-                this.classList.toggle("active");
-                var panel = this.nextElementSibling;
-                if (panel.style.maxHeight) {
-                    panel.style.maxHeight = null;
-                } else {
-                    panel.style.maxHeight = panel.scrollHeight + "px";
-                } 
-            });
-        }
-    </script>
+  <div class="pills" id="pills"></div>
+  <div class="dots" id="dots"></div>
+  <div class="pbar"><div class="pfill" id="pfill"></div></div>
+  <div class="voice-warn" id="voice-warn">⚠️ No Mandarin voice found on this browser.</div>
 
+  <div class="card" id="card"></div>
+
+  <div class="nav">
+    <button class="btn-nav" id="pb" onclick="move(-1)">← Prev</button>
+    <span class="nav-ctr" id="nc"></span>
+    <button class="btn-nav" id="nb" onclick="move(1)">Next →</button>
+  </div>
+
+  <div class="footer">Tap 🔊 first · guess the meaning · then reveal</div>
+</div>
+
+<!-- EXTERNAL DATA FILE: On GitHub, create 'data.js' and put your VOCAB_DATA there! -->
+<!-- By using this approach, you never have to edit this index.html file again to add words. -->
+<script src="data.js"></script>
+
+<script>
+// This FALLBACK_DATA is purely used here so the preview still works if data.js is not found.
+// When you host this, it will automatically pull from your data.js file instead.
+const FALLBACK_DATA = [
+  { char: '爸爸', py: 'bà ba', ms: 'ayah / bapa', en: 'father', topic: 'Topic 3', emoji: '👨', strokes: [['父','爸'], ['爸爸']], tip: '爸 = 8 strokes: father radical 父 on top, 巴 below.', count: '8 + 8 = 16' },
+  { char: '回来', py: 'huí lái', ms: 'balik / kembali', en: 'come back / return', topic: 'Topic 3', emoji: '🔙', strokes: [['囗','回'], ['木','来']], tip: '回 = 6 strokes: two nested squares. 来 = 7 strokes.', count: '6 + 7 = 13' },
+  { char: '姐姐', py: 'jiě jie', ms: 'kakak perempuan', en: 'older sister', topic: 'Topic 3', emoji: '👧', strokes: [['女','姐'], ['姐姐']], tip: '姐 = 8 strokes: woman radical 女 on left.', count: '8 + 8 = 16' },
+  { char: '笑声', py: 'xiào shēng', ms: 'bunyi ketawa', en: 'laughter', topic: 'Topic 3', emoji: '😂', strokes: [['⺮','笑'], ['士','声']], tip: '笑 = 10 strokes: bamboo radical on top.', count: '10 + 7 = 17' },
+  { char: '星星', py: 'xīng xing', ms: 'bintang', en: 'stars', topic: 'Topic 3', emoji: '⭐', strokes: [['日','星'], ['星星']], tip: '星 = 9 strokes: sun radical 日 on top.', count: '9 + 9 = 18' },
+  { char: '吃饭', py: 'chī fàn', ms: 'makan', en: 'to eat a meal', topic: 'Topic 4', emoji: '🍚', strokes: [['口','吃'], ['饣','饭']], tip: '吃 = 6 strokes. 饭 = 7 strokes.', count: '6 + 7 = 13' },
+  { char: '饭菜', py: 'fàn cài', ms: 'lauk-pauk', en: 'food and dishes', topic: 'Topic 4', emoji: '🍱', strokes: [['饣','饭'], ['艹','菜']], tip: '饭 = 7 strokes. 菜 = 11 strokes.', count: '7 + 11 = 18' },
+  { char: '瓜', py: 'guā', ms: 'tembikai', en: 'melon', topic: 'Topic 4', emoji: '🍉', strokes: [['瓜']], tip: '瓜 = 5 strokes.', count: '5' },
+  { char: '喜欢', py: 'xǐ huān', ms: 'suka', en: 'to like', topic: 'Topic 4', emoji: '❤️', strokes: [['壴','喜'], ['欠','欢']], tip: '喜 = 12 strokes. 欢 = 6 strokes.', count: '12 + 6 = 18' },
+  { char: '妹妹', py: 'mèi mei', ms: 'adik perempuan', en: 'younger sister', topic: 'Topic 4', emoji: '👧🏻', strokes: [['女','妹'], ['妹妹']], tip: '妹 = 8 strokes.', count: '8 + 8 = 16' },
+  { char: '积木', py: 'jī mù', ms: 'blok mainan', en: 'building blocks', topic: 'Topic 4', emoji: '🧱', strokes: [['禾','积'], ['木']], tip: '积 = 10 strokes.', count: '10 + 4 = 14' },
+  { char: '房子', py: 'fáng zi', ms: 'rumah', en: 'house', topic: 'Topic 4', emoji: '🏠', strokes: [['宀','房'], ['子']], tip: '房 = 8 strokes. 子 = 3 strokes.', count: '8 + 3 = 11' },
+  { char: '我', py: 'wǒ', ms: 'saya', en: 'I / me', topic: 'Topic 4', emoji: '🧒', strokes: [['我']], tip: '我 = 7 strokes.', count: '7' },
+  { char: '游乐场', py: 'yóu lè chǎng', ms: 'taman permainan', en: 'playground', topic: 'Topic 4', emoji: '🛝', strokes: [['氵','游'], ['乐'], ['土','场']], tip: '游 = 12 strokes. 乐 = 5 strokes. 场 = 6 strokes.', count: '12 + 5 + 6 = 23' },
+  { char: '露珠', py: 'lù zhū', ms: 'titisan embun', en: 'dewdrop', topic: 'Topic 5', emoji: '💧', strokes: [['雨','露'], ['王','珠']], tip: '露 = 21 strokes (rain radical 雨). 珠 = 10 strokes.', count: '21 + 10 = 31' },
+  { char: '照相', py: 'zhào xiàng', ms: 'tangkap gambar', en: 'take a photo', topic: 'Topic 5', emoji: '📷', strokes: [['灬','照'], ['木','相']], tip: '照 = 13 strokes (fire radical 灬). 相 = 9 strokes.', count: '13 + 9 = 22' },
+  { char: '月亮', py: 'yuè liang', ms: 'bulan', en: 'moon', topic: 'Topic 5', emoji: '🌙', strokes: [['月'], ['亠','亮']], tip: '月 = 4 strokes. 亮 = 9 strokes.', count: '4 + 9 = 13' },
+  { char: '红花', py: 'hóng huā', ms: 'bunga merah', en: 'red flower', topic: 'Topic 5', emoji: '🌺', strokes: [['纟','红'], ['艹','花']], tip: '红 = 6 strokes (silk radical 纟). 花 = 7 strokes (grass radical 艹).', count: '6 + 7 = 13' },
+  { char: '雨停了', py: 'yǔ tíng le', ms: 'hujan berhenti', en: 'rain stopped', topic: 'Topic 5', emoji: '🌦️', strokes: [['雨'], ['亻','停'], ['了']], tip: '雨 = 8 strokes. 停 = 11 strokes. 了 = 2 strokes.', count: '8 + 11 + 2 = 21' },
+  { char: '青山', py: 'qīng shān', ms: 'gunung hijau', en: 'green mountain', topic: 'Topic 5', emoji: '⛰️', strokes: [['青'], ['山']], tip: '青 = 8 strokes. 山 = 3 strokes.', count: '8 + 3 = 11' },
+  { char: '弯曲', py: 'wān qū', ms: 'bengkang-bengkok', en: 'curved / winding', topic: 'Topic 5', emoji: '〰️', strokes: [['弓','弯'], ['曲']], tip: '弯 = 9 strokes. 曲 = 6 strokes.', count: '9 + 6 = 15' },
+  { char: '小河', py: 'xiǎo hé', ms: 'sungai kecil', en: 'small river', topic: 'Topic 5', emoji: '🏞️', strokes: [['小'], ['氵','河']], tip: '小 = 3 strokes. 河 = 8 strokes (water radical 氵).', count: '3 + 8 = 11' },
+  { char: '只', py: 'zhī', ms: 'penjodoh bilangan (ekor)', en: 'measure word (animals)', topic: 'Topic 5', emoji: '🔢', strokes: [['口','只']], tip: '只 = 5 strokes. Used as a measure word for animals like birds or cats.', count: '5' }
+];
+
+// Check if VOCAB_DATA was successfully loaded from data.js. If not, use the fallback data above.
+const ALL = typeof VOCAB_DATA !== 'undefined' ? VOCAB_DATA : FALLBACK_DATA;
+
+// Local Storage for Gamification & Review
+let userStats = { streak: 0, needsReview: [] };
+try {
+  const saved = localStorage.getItem('mandarinCardStats');
+  if (saved) userStats = JSON.parse(saved);
+} catch (e) { console.warn("Local storage disabled"); }
+
+let topic = 'All';
+let words = [...ALL];
+let idx = 0;
+let shown = { pinyin: false, meaning: false, char: false };
+let zhVoice = null;
+
+function saveStats() {
+  try { localStorage.setItem('mandarinCardStats', JSON.stringify(userStats)); } catch (e) {}
+  updateStreakUI();
+}
+
+function updateStreakUI() {
+  const badge = document.getElementById('streak-counter');
+  if (userStats.streak > 0) {
+    badge.style.display = 'inline-flex';
+    badge.innerHTML = `🔥 ${userStats.streak}`;
+    // Pop animation
+    badge.style.transform = 'scale(1.2)';
+    setTimeout(() => badge.style.transform = 'scale(1)', 200);
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function loadVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  zhVoice = voices.find(v => v.lang === 'zh-CN') || voices.find(v => v.lang.startsWith('zh'));
+  if (!zhVoice && voices.length > 0) document.getElementById('voice-warn').style.display = 'block';
+}
+window.speechSynthesis.onvoiceschanged = loadVoice;
+
+function speak(rate) {
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(words[idx].char);
+  u.lang = 'zh-CN'; 
+  u.rate = rate || 1;
+  if (zhVoice) u.voice = zhVoice;
+  window.speechSynthesis.speak(u);
+}
+
+function mark(isCorrect) {
+  const fb = document.getElementById('feedback');
+  const currentChar = words[idx].char;
+
+  if (isCorrect) {
+    fb.textContent = "🎉 Excellent! 加油!";
+    fb.style.backgroundColor = "#22c55e";
+    userStats.streak += 1;
+    fireConfetti();
+    // Remove from review queue if they got it right
+    userStats.needsReview = userStats.needsReview.filter(c => c !== currentChar);
+  } else {
+    fb.textContent = "💪 Keep trying! Saved to Review!";
+    fb.style.backgroundColor = "#ef4444";
+    userStats.streak = 0;
+    // Add to review queue if not already there
+    if (!userStats.needsReview.includes(currentChar)) {
+      userStats.needsReview.push(currentChar);
+    }
+  }
+  
+  saveStats();
+  renderPills(); // Update pills in case Review queue changed
+
+  fb.style.opacity = "1";
+  setTimeout(() => fb.style.opacity = "0", 1200);
+  
+  // Auto advance on correct
+  if (isCorrect && idx < words.length - 1) setTimeout(() => move(1), 1400);
+}
+
+function renderPills() {
+  const topics = ['All', ...new Set(ALL.map(c => c.topic))];
+  let html = topics.map(t =>
+    `<button class="pill${topic === t ? ' active' : ''}" onclick="setTopic('${t}')">${t}</button>`
+  ).join('');
+
+  // Add Review Pill dynamically if there are words to review
+  if (userStats.needsReview.length > 0) {
+    const isRevActive = topic === 'Review';
+    html += `<button class="pill review-pill ${isRevActive ? 'active' : ''}" onclick="setTopic('Review')">🧠 Needs Review (${userStats.needsReview.length})</button>`;
+  }
+  document.getElementById('pills').innerHTML = html;
+}
+
+function setTopic(t) { 
+  topic = t; 
+  if (t === 'All') {
+    words = [...ALL];
+  } else if (t === 'Review') {
+    words = ALL.filter(c => userStats.needsReview.includes(c.char));
+  } else {
+    words = ALL.filter(c => c.topic === t); 
+  }
+  idx = 0; 
+  reset(); 
+  renderPills(); 
+  render(); 
+}
+
+function reset() { shown = { pinyin: false, meaning: false, char: false }; }
+function reveal(k) { shown[k] = true; render(); }
+function move(d) { idx = Math.max(0, Math.min(words.length - 1, idx + d)); reset(); render(); }
+function doShuffle() { words.sort(() => Math.random() - 0.5); idx = 0; reset(); render(); }
+
+function renderItem(key, icon, label, inner) {
+  return !shown[key] ? `<div class="reveal-btn" onclick="reveal('${key}')"><div class="icon">${icon}</div><div class="lbl">${label}</div></div>` : `<div class="revealed-box">${inner}</div>`;
+}
+
+function render() {
+  if (words.length === 0) {
+    document.getElementById('card').innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text3)">No cards here!</div>`;
+    return;
+  }
+
+  const c = words[idx];
+  const pct = Math.round((idx + 1) / words.length * 100);
+  document.getElementById('pfill').style.width = pct + '%';
+  document.getElementById('nc').textContent = (idx + 1) + ' / ' + words.length;
+  document.getElementById('pb').disabled = idx === 0;
+  document.getElementById('nb').disabled = idx === words.length - 1;
+  document.getElementById('dots').innerHTML = words.map((_, i) => `<div class="dot${i === idx ? ' active' : i < idx ? ' done' : ''}"></div>`).join('');
+
+  let sHtml = '';
+  c.strokes.forEach((g, i) => {
+    g.forEach(s => sHtml += `<div class="schar kaiti">${s}</div>`);
+    if (i < c.strokes.length - 1) sHtml += `<div style="width:1px; background:var(--border); margin:0 4px;"></div>`;
+  });
+
+  // Dual language meaning block
+  const meaningContent = `
+    <div class="r-emoji">${c.emoji || '💬'}</div>
+    <div class="r-en">${c.en}</div>
+    <div class="r-ms">${c.ms}</div>
+  `;
+
+  document.getElementById('card').innerHTML = `
+    <div class="card-top"><span class="ctr">${idx + 1} of ${words.length}</span><span class="tag">${c.topic}</span></div>
+    <div class="listen-zone"><div class="listen-title">👂 STEP 1 — LISTEN</div><div class="listen-btns"><button class="btn-listen" onclick="speak(1)">🔊 Listen</button><button class="btn-slow" onclick="speak(0.6)">🐢 Slow</button></div></div>
+    <div class="reveal-grid">
+      ${renderItem('pinyin', '🗣️', 'PINYIN', `<div class="lbl">PINYIN</div><div class="r-pinyin">${c.py}</div>`)}
+      ${renderItem('meaning', '🤔', 'MEANING', meaningContent)}
+      ${renderItem('char', '✏️', 'CHARACTER', `<div class="lbl">CHARACTER</div><div class="r-char kaiti">${c.char}</div>`)}
+    </div>
+    ${shown.char ? `<div class="stroke-section"><div class="stroke-label">STROKE ORDER</div><div class="stroke-steps">${sHtml}</div><div class="stroke-tip">✏️ ${c.tip}</div></div>` : ''}
+    
+    <div class="grade-zone">
+      <button class="btn-grade btn-wrong" onclick="mark(false)">❌ Need Practice</button>
+      <button class="btn-grade btn-correct" onclick="mark(true)">✅ Got It</button>
+    </div>
+  `;
+}
+
+// Simple Lightweight Confetti System
+function fireConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  
+  const particles = [];
+  const colors = ['#fce18a', '#ff726d', '#b48def', '#f4306d', '#4ade80'];
+  
+  for(let i=0; i<50; i++) {
+    particles.push({
+      x: canvas.width / 2, y: canvas.height / 2 + 50,
+      r: Math.random() * 6 + 2,
+      dx: Math.random() * 10 - 5,
+      dy: Math.random() * -10 - 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 10,
+      tiltAngle: 0, tiltAngleInc: (Math.random() * 0.07) + 0.05
+    });
+  }
+
+  let animationId;
+  function renderConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+    particles.forEach(p => {
+      p.tiltAngle += p.tiltAngleInc;
+      p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
+      p.x += Math.sin(p.tiltAngle) * 2;
+      p.dy += 0.1; // gravity
+      p.x += p.dx; p.y += p.dy;
+      
+      if (p.y <= canvas.height) active = true;
+
+      ctx.beginPath();
+      ctx.lineWidth = p.r;
+      ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x + p.tilt + p.r, p.y);
+      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+      ctx.stroke();
+    });
+    if (active) animationId = requestAnimationFrame(renderConfetti);
+    else ctx.clearRect(0,0, canvas.width, canvas.height);
+  }
+  renderConfetti();
+}
+
+// Init
+updateStreakUI();
+renderPills(); 
+render();
+</script>
 </body>
 </html>
